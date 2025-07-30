@@ -34,7 +34,7 @@ namespace ProTasker.Controllers
             return View(viewModel);
         }
 
-        [Authorize] // فقط وقتی لاگین باشه می‌تونه Task بسازه
+        [Authorize] 
         [HttpPost]
         public async Task<IActionResult> Create(int projectId, string title)
         {
@@ -54,7 +54,7 @@ namespace ProTasker.Controllers
             return Json(new { id = task.Id, title = task.Title, status = task.Status.ToString() });
         }
 
-        [Authorize] // فقط وقتی لاگین باشه می‌تونه Status رو تغییر بده
+        [Authorize] 
         [HttpPost]
         public async Task<IActionResult> UpdateStatus(int id, string status)
         {

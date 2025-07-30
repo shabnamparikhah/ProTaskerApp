@@ -55,7 +55,7 @@ if (!app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseMigrationsEndPoint(); // نمایش خطاهای EF در حالت Dev
+    app.UseMigrationsEndPoint(); 
 }
 
 app.UseHttpsRedirection();

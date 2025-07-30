@@ -1,104 +1,115 @@
 ﻿@model ProTasker.Models.KanbanViewModel
 @{
-    Layout = "_Layout";
+    ViewData["Title"] = "Kanban Board";
 }
 
-<h2>Kanban Board</h2>
+<h2 class="text-center mb-4">@ViewData["Title"]</h2>
 
+<input type="hidden" id="projectId" value="@Model.ProjectId" />
 
-<div class="mb-3">
-    <input type="hidden" id="projectId" value="@Model.ProjectId" />
-
+<!-- Add Task Section -->
+<div class="mb-4">
     @if (User.Identity.IsAuthenticated)
     {
-        <div class="input-group mb-3 w-50">
+        <div class="input-group mb-3 w-50 shadow-sm">
             <input type="text" class="form-control" id="taskTitle" placeholder="New task title..." />
             <button id="addTaskBtn" type="button" class="btn btn-primary">Add Task</button>
         </div>
     }
     else
     {
-        <div class="alert alert-info w-50">
-            Please log in to add tasks.
+        <div class="alert alert-warning w-50 shadow-sm">
+            Please
+            <a asp-area="Identity"
+               asp-page="/Account/Login"
+               asp-route-returnUrl="@Url.Action("Kanban", "TaskItems", new { projectId = Model.ProjectId })"
+               class="fw-bold">
+                log in
+            </a>
+            to add new tasks.
         </div>
     }
 </div>
 
-
-<div class="row">
-    <div class="col" id="todoColumn" data-status="Todo">
-        <h4>To Do</h4>
-        @foreach (var task in Model.Todo)
-        {
-            <div class="card mb-2 p-2 bg-light task-card" draggable="true" data-id="@task.Id">
-                @task.Title
-            </div>
-        }
+<!-- Kanban Board Columns -->
+<div class="row kanban-board g-3">
+    <div class="col-md-4">
+        <h4 class="text-center text-primary">To Do</h4>
+        <ul id="todoList" class="list-group min-vh-50 border rounded p-2 bg-light">
+            @foreach (var task in Model.Todo)
+            {
+                <li class="list-group-item mb-2 task-item shadow-sm" data-id="@task.Id">@task.Title</li>
+            }
+        </ul>
     </div>
-    <div class="col" id="inProgressColumn" data-status="InProgress">
-        <h4>In Progress</h4>
-        @foreach (var task in Model.InProgress)
-        {
-            <div class="card mb-2 p-2 bg-warning text-dark task-card" draggable="true" data-id="@task.Id">
-                @task.Title
-            </div>
-        }
+    <div class="col-md-4">
+        <h4 class="text-center text-warning">In Progress</h4>
+        <ul id="inProgressList" class="list-group min-vh-50 border rounded p-2 bg-light">
+            @foreach (var task in Model.InProgress)
+            {
+                <li class="list-group-item mb-2 task-item shadow-sm" data-id="@task.Id">@task.Title</li>
+            }
+        </ul>
     </div>
-    <div class="col" id="doneColumn" data-status="Done">
-        <h4>Done</h4>
-        @foreach (var task in Model.Done)
-        {
-            <div class="card mb-2 p-2 bg-success text-white task-card" draggable="true" data-id="@task.Id">
-                @task.Title
-            </div>
-        }
+    <div class="col-md-4">
+        <h4 class="text-center text-success">Done</h4>
+        <ul id="doneList" class="list-group min-vh-50 border rounded p-2 bg-light">
+            @foreach (var task in Model.Done)
+            {
+                <li class="list-group-item mb-2 task-item shadow-sm" data-id="@task.Id">@task.Title</li>
+            }
+        </ul>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
     <script>
-        console.log("✅ Kanban JS Loaded");
+        $(function () {
+            var statusMap = {
+                "todoList": "Todo",
+                "inProgressList": "InProgress",
+                "doneList": "Done"
+            };
 
-        // 🔹 Add Task
-        $("#addTaskBtn").click(function () {
-            var title = $("#taskTitle").val();
-            var projectId = $("#projectId").val();
-            if (!title.trim()) return;
+            var isAuthenticated = '@User.Identity.IsAuthenticated'.toLowerCase() === 'true';
 
-            $.post("/TaskItems/Create", { title: title, projectId: projectId }, function (task) {
-                $("#todoColumn").append(
-                    `<div class="card mb-2 p-2 bg-light task-card" draggable="true" data-id="${task.id}">
-                        ${task.title}
-                    </div>`
-                );
-                $("#taskTitle").val("");
-            });
-        });
+            if (isAuthenticated) {
+                makeTasksDraggable();
 
-        // 🔹 Drag & Drop
-        let draggedItem = null;
+                $(".list-group").droppable({
+                    accept: ".task-item",
+                    drop: function (event, ui) {
+                        var taskId = ui.draggable.data("id");
+                        var listId = $(this).attr("id");
+                        var newStatus = statusMap[listId];
 
-        $(document).on("dragstart", ".task-card", function () {
-            draggedItem = this;
-            setTimeout(() => $(this).hide(), 0);
-        });
+                        $(ui.draggable).detach().appendTo($(this));
 
-        $(document).on("dragend", ".task-card", function () {
-            draggedItem = null;
-            $(".task-card").show();
-        });
+                        $.post("/TaskItems/UpdateStatus", { id: taskId, status: newStatus });
+                    }
+                });
 
-        $(".col").on("dragover", function (e) { e.preventDefault(); });
+                $("#addTaskBtn").on("click", function () {
+                    var title = $("#taskTitle").val().trim();
+                    var projectId = $("#projectId").val();
 
-        $(".col").on("drop", function (e) {
-            e.preventDefault();
-            if (draggedItem) {
-                $(this).append(draggedItem);
+                    if (!title) return;
 
-                let taskId = $(draggedItem).data("id");
-                let newStatus = $(this).data("status");
+                    $.post("/TaskItems/Create", { projectId: projectId, title: title }, function (data) {
+                        var newTask = $('<li class="list-group-item mb-2 task-item shadow-sm" data-id="' + data.id + '">' + data.title + '</li>');
+                        $("#todoList").append(newTask);
+                        $("#taskTitle").val("");
+                        makeTasksDraggable();
+                    });
+                });
+            }
 
-                $.post("/TaskItems/UpdateStatus", { id: taskId, status: newStatus });
+            function makeTasksDraggable() {
+                $(".task-item").draggable({
+                    helper: "clone",
+                    revert: "invalid"
+                });
             }
         });
     </script>
