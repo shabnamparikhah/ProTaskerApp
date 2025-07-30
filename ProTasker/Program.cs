@@ -7,11 +7,11 @@ using ProTasker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Connection String
+//   Connection String
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// ✅ Add DbContext
+//   Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -34,20 +34,20 @@ builder.Services.AddSingleton<IEmailSender, FakeEmailSender>();
 builder.Services.AddControllersWithViews();
 
 
-// ✅ Add MVC & Razor Pages
+//   Add MVC & Razor Pages
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// ✅ Seed Database & Admin User
+//   Seed Database & Admin User
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await DbInitializer.InitializeAsync(services);
 }
 
-// ✅ Configure the HTTP Request Pipeline
+//   Configure the HTTP Request Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

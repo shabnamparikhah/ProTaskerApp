@@ -12,17 +12,11 @@ namespace ProTasker.Data
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            // ایجاد دیتابیس در صورت نیاز
             await context.Database.MigrateAsync();
-
-            // ایجاد نقش Admin
             if (!await roleManager.RoleExistsAsync("Admin"))
             {
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
             }
-
-            // ایجاد کاربر Admin
             string adminEmail = "admin@protasker.com";
             string adminPassword = "Admin123!";
 
