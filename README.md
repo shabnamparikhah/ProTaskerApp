@@ -1,6 +1,6 @@
 # ProTasker
 
-ProTasker is a **Kanban-style task management web application** built with **ASP.NET MVC**, **Entity Framework Core**, **Bootstrap**, and **jQuery**, with a **RESTful API** for external integrations.  
+ProTasker is a **Kanban-style task management web application** built with **ASP.NET MVC**, **Entity Framework Core**, **Bootstrap**, and **jQuery**, featuring a **RESTful API** for external integrations.
 
 It allows users to:
 
